@@ -1,7 +1,6 @@
 # kamoo
 
 ### FITUR ONPROSES
-- [HUTANG] implementasi notifikasi
 - [PEGATURAN] implementasi 1. pengaturan nota (cetak struk, ucapan dibawah nota yang berelasi dengan info toko). 2. tampilan (tema utama, dan dark). 3. Backup Data
 
 
