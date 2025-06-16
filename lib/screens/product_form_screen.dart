@@ -1,13 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kamoo/models/product.dart';
 import 'package:kamoo/screens/barcode_scanner_screen.dart';
-import 'package:kamoo/services/product_service.dart'; // Import ProductService Anda
-
-// Definisi konstanta untuk warna utama aplikasi
-const Color kPrimaryColor = Color(0xFF084FEA);
+import 'package:kamoo/services/product_service.dart';
 
 class ProductFormScreen extends StatefulWidget {
   final Product? product;
@@ -29,22 +28,22 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   final TextEditingController _stockController = TextEditingController();
   final TextEditingController _unitController = TextEditingController();
 
-  // Tidak perlu lagi membuat instance ProductService karena metodenya statis
-  // final ProductService _productService = ProductService(); // HAPUS BARIS INI
-
   bool _isEditing = false;
   File? _selectedImage;
-  bool _isSaving = false; // Mengubah nama dari _isLoading menjadi _isSaving
+  bool _isSaving = false;
+  late FToast fToast; // Untuk notifikasi menarik
 
   @override
   void initState() {
     super.initState();
+    fToast = FToast();
+    fToast.init(context); // Inisialisasi FToast
+
     if (widget.product != null) {
       _isEditing = true;
       _idController.text = widget.product!.id ?? '';
       _nameController.text = widget.product!.name;
       _descriptionController.text = widget.product!.description ?? '';
-      // Menggunakan .toStringAsFixed(0) untuk memastikan tidak ada desimal yang tidak perlu
       _buyPriceController.text = widget.product!.buyPrice.toStringAsFixed(0);
       _priceController.text = widget.product!.price.toStringAsFixed(0);
       _stockController.text = widget.product!.stock.toStringAsFixed(0);
@@ -54,6 +53,20 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       }
     } else if (widget.initialBarcode != null) {
       _idController.text = widget.initialBarcode!;
+    } else {
+      _proposeAutoProductId();
+    }
+  }
+
+  Future<void> _proposeAutoProductId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final int lastSavedProdSequence = prefs.getInt('lastProdIdSequence') ?? 0;
+    final String proposedId = 'Prod#${(lastSavedProdSequence + 1).toString().padLeft(4, '0')}';
+    
+    if (_idController.text.isEmpty) {
+      setState(() {
+        _idController.text = proposedId;
+      });
     }
   }
 
@@ -76,18 +89,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         MaterialPageRoute(builder: (context) => const BarcodeScannerScreen()),
       );
 
-      if (!mounted) return; // Periksa mounted setelah await
+      if (!mounted) return;
 
       if (barcodeResult != null && barcodeResult.isNotEmpty) {
-        // Cek apakah barcode sudah ada di database
         final existingProduct = await ProductService.getProductByBarcode(barcodeResult);
-        if (!mounted) return; // Periksa mounted lagi
+        if (!mounted) return;
 
         if (existingProduct != null) {
           _showErrorNotification('Produk dengan barcode ini sudah ada.');
-          // Opsional: Langsung navigasi ke edit produk jika barcode ditemukan
-          // Navigator.pop(context);
-          // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ProductFormScreen(product: existingProduct)));
           return;
         }
 
@@ -111,7 +120,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         imageQuality: 80,
       );
 
-      if (!mounted) return; // Periksa mounted setelah await
+      if (!mounted) return;
 
       if (pickedFile != null) {
         setState(() {
@@ -132,7 +141,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: kPrimaryColor),
+              leading: const Icon(Icons.camera_alt, color: Colors.blue),
               title: const Text('Ambil dari Kamera'),
               onTap: () {
                 Navigator.pop(context);
@@ -140,7 +149,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: kPrimaryColor),
+              leading: const Icon(Icons.photo_library, color: Colors.blue),
               title: const Text('Pilih dari Galeri'),
               onTap: () {
                 Navigator.pop(context);
@@ -156,12 +165,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isSaving = true); // Gunakan _isSaving
+    setState(() => _isSaving = true);
 
     try {
       final productId = _idController.text.trim();
 
-      // Validasi unik ID/Barcode saat menambahkan produk baru
       if (!_isEditing) {
         final existingProduct = await ProductService.getProductByBarcode(productId);
         if (!mounted) return;
@@ -174,17 +182,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       final price = double.tryParse(_priceController.text);
       final stock = double.tryParse(_stockController.text);
 
-      // Validasi parsing numerik
       if (buyPrice == null || price == null || stock == null) {
         throw Exception('Harga beli, harga jual, dan stok harus berupa angka yang valid.');
       }
 
-      // Validasi harga jual > harga beli
       if (price <= buyPrice) {
         throw Exception('Harga jual harus lebih besar dari harga beli');
       }
 
-      // Handle image
       String? imagePath;
       if (_selectedImage != null) {
         final appDir = await getApplicationDocumentsDirectory();
@@ -192,7 +197,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         final savedImage = await _selectedImage!.copy('${appDir.path}/$fileName');
         imagePath = savedImage.path;
       } else if (_isEditing && widget.product?.imagePath != null) {
-        // Jika sedang mengedit dan tidak ada gambar baru dipilih, pertahankan gambar lama
         imagePath = widget.product!.imagePath;
       }
 
@@ -207,56 +211,127 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         imagePath: imagePath,
       );
 
-      // Gunakan metode statis dari ProductService
       if (_isEditing) {
-        await ProductService.updateProduct(product); // Panggil metode update statis
+        await ProductService.updateProduct(product);
       } else {
-        await ProductService.addProduct(product); // Panggil metode add statis
+        await ProductService.addProduct(product);
+
+        final prefs = await SharedPreferences.getInstance();
+        final int lastSavedProdSequence = prefs.getInt('lastProdIdSequence') ?? 0;
+
+        if (productId.startsWith('Prod#') && productId.length > 5) {
+          final String numPart = productId.substring(5);
+          final int? currentProdSequence = int.tryParse(numPart);
+
+          if (currentProdSequence != null && currentProdSequence > lastSavedProdSequence) {
+            await prefs.setInt('lastProdIdSequence', currentProdSequence);
+          }
+        }
       }
 
-      if (!mounted) return; // Periksa mounted sebelum navigasi
+      if (!mounted) return;
       _showSuccessNotification(
-        _isEditing ? 'Produk berhasil diperbarui' : 'Produk berhasil ditambahkan',
+        _isEditing ? 'Yay! Produk berhasil diperbarui' : 'Yay! Produk berhasil ditambahkan',
       );
-      Navigator.pop(context, true); // Pop dengan hasil true untuk indikasi sukses
+      Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      // Periksa apakah pesan error berasal dari validasi kustom
       if (e is Exception) {
-        _showErrorNotification(e.toString().replaceFirst('Exception: ', ''));
+        _showErrorNotification(' ${e.toString().replaceFirst('Exception: ', '')}');
       } else {
         _showErrorNotification('Terjadi kesalahan: ${e.toString()}');
       }
     } finally {
       if (mounted) {
-        setState(() => _isSaving = false); // Gunakan _isSaving
+        setState(() => _isSaving = false);
       }
     }
   }
 
+  // ===== NOTIFIKASI MENARIK =====
   void _showSuccessNotification(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+    fToast.showToast(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(25),
+          gradient: const LinearGradient(
+            colors: [Colors.green, Colors.green],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              // ignore: deprecated_member_use
+              color: Colors.green.withOpacity(0.3),
+              blurRadius: 10,
+              spreadRadius: 2,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white, size: 28),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
+      gravity: ToastGravity.TOP,
+      toastDuration: const Duration(seconds: 3),
     );
   }
 
   void _showErrorNotification(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+    fToast.showToast(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(25),
+          gradient: const LinearGradient(
+            colors: [Colors.red, Colors.red],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              // ignore: deprecated_member_use
+              color: Colors.red.withOpacity(0.3),
+              blurRadius: 10,
+              spreadRadius: 2,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white, size: 28),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                message.length > 50 ? '${message.substring(0, 50)}...' : message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
+      gravity: ToastGravity.TOP,
+      toastDuration: const Duration(seconds: 4),
     );
   }
 
@@ -266,7 +341,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Produk' : 'Tambah Produk'),
         centerTitle: true,
-        backgroundColor: kPrimaryColor,
+        backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -325,10 +400,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                readOnly: _isEditing, // ID tidak bisa diubah saat edit
+                readOnly: _isEditing,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Barcode/ID tidak boleh kosong';
+                    return 'Barcode/ID produk tidak boleh kosong';
                   }
                   return null;
                 },
@@ -467,15 +542,15 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _isSaving ? null : _saveProduct, // Nonaktifkan tombol saat menyimpan
+                  onPressed: _isSaving ? null : _saveProduct,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrimaryColor,
+                    backgroundColor: Colors.blue,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   child: _isSaving
-                      ? const CircularProgressIndicator(color: Colors.white) // Tampilkan indikator loading di tombol
+                      ? const CircularProgressIndicator(color: Colors.white)
                       : Text(
                           _isEditing ? 'SIMPAN PERUBAHAN' : 'TAMBAH PRODUK',
                           style: const TextStyle(

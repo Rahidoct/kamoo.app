@@ -101,7 +101,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.deepPurple[50],
+      backgroundColor: Colors.white,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -157,7 +157,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     backgroundColor: const Color(0xFF084FEA),
                   ),
-                  child: const Text("Daftar", style: TextStyle(color: Colors.white)),
+                  child: const Text("DAFTAR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 12),
@@ -170,7 +170,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     children: [
                       TextSpan(
                         text: 'Login',
-                        style: TextStyle(color: Color(0xFF084FEA)),
+                        style: TextStyle(color: Color(0xFF084FEA), fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -194,17 +194,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       style: const TextStyle(color: Colors.black),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Color(0xFF084FEA)),
+        labelStyle: const TextStyle(color: Color.fromARGB(255, 79, 102, 150)),
         focusedBorder: OutlineInputBorder(
           borderSide: const BorderSide(color: Color(0xFF084FEA), width: 2),
           borderRadius: BorderRadius.circular(12),
         ),
         enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xFF084FEA)),
+          borderSide: const BorderSide(color: Color.fromARGB(255, 79, 102, 150), width: 1),
           borderRadius: BorderRadius.circular(12),
         ),
         filled: true,
-        fillColor: Colors.deepPurple[50],
+        fillColor: Colors.white,
       ),
     );
   }
@@ -221,21 +221,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
       style: const TextStyle(color: Colors.black),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Color(0xFF084FEA)),
+        labelStyle: const TextStyle(color: Color.fromARGB(255, 79, 102, 150)),
         focusedBorder: OutlineInputBorder(
           borderSide: const BorderSide(color: Color(0xFF084FEA), width: 2),
           borderRadius: BorderRadius.circular(12),
         ),
         enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xFF084FEA)),
+          borderSide: const BorderSide(color: Color.fromARGB(255, 79, 102, 150), width: 1),
           borderRadius: BorderRadius.circular(12),
         ),
         filled: true,
-        fillColor: Colors.deepPurple[50],
+        fillColor: Colors.white,
         suffixIcon: IconButton(
           icon: Icon(
             isVisible ? Icons.visibility : Icons.visibility_off,
-            color: const Color(0xFF084FEA),
           ),
           onPressed: toggleVisibility,
         ),

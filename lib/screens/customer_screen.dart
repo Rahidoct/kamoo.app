@@ -323,7 +323,7 @@ class _CustomerScreenState extends State<CustomerScreen> with WidgetsBindingObse
                       icon: Icon(isEditing ? Icons.save : Icons.add),
                       onPressed: isEditing ? () => _editCustomer(customer) : _addCustomer,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF084FEA),
+                        backgroundColor: Colors.blue,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -383,8 +383,14 @@ class _CustomerScreenState extends State<CustomerScreen> with WidgetsBindingObse
     return Scaffold(
       appBar: AppBar(
         title: const Text('Daftar Pelanggan'),
-        backgroundColor: const Color(0xFF084FEA),
+        backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(16),
+          ),
+        ),
         // Hapus actions jika tidak ada ikon filter di AppBar lagi
       ),
       body: Column(
@@ -526,7 +532,7 @@ class _CustomerScreenState extends State<CustomerScreen> with WidgetsBindingObse
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCustomerModal(),
-        backgroundColor: const Color(0xFF084FEA),
+        backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Tambah'),

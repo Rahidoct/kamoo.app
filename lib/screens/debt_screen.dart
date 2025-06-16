@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../models/debt.dart';
-import '../models/debt_transaction.dart'; // Import model transaksi
+import '../models/debt_transaction.dart';
 import '../services/data_manager.dart';
 
 class DebtScreen extends StatefulWidget {
@@ -15,7 +16,6 @@ class DebtScreen extends StatefulWidget {
 
 class _DebtScreenState extends State<DebtScreen> {
   List<Debt> _debts = [];
-
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _customerController = TextEditingController();
@@ -23,14 +23,18 @@ class _DebtScreenState extends State<DebtScreen> {
   final TextEditingController _notesController = TextEditingController();
   DateTime? _selectedDueDate;
   String _selectedStatus = 'Belum Lunas';
-
   Debt? _editingDebt;
   final Uuid _uuid = const Uuid();
+  late FToast fToast;
 
   @override
   void initState() {
     super.initState();
-    _loadDebts();
+    fToast = FToast();
+    fToast.init(context);
+    _loadDebts().then((_) {
+      _checkOverdueDebts();
+    });
   }
 
   Future<void> _loadDebts() async {
@@ -44,6 +48,232 @@ class _DebtScreenState extends State<DebtScreen> {
     await DataManager.saveDebts(_debts);
   }
 
+  Future<void> _checkOverdueDebts() async {
+    final overdueDebts = _debts.where((d) => 
+      d.dueDate.isBefore(DateTime.now()) && 
+      d.status != 'Lunas'
+    ).toList();
+
+    if (overdueDebts.isNotEmpty && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showOverdueNotification(overdueDebts);
+      });
+    }
+  }
+
+  // ==================== NOTIFIKASI MENARIK ====================
+  void _showOverdueNotification(List<Debt> overdueDebts) {
+    fToast.showToast(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(25),
+          gradient: LinearGradient(
+            colors: [Colors.red.shade700, Colors.red.shade900],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              // ignore: deprecated_member_use
+              color: Colors.red.withOpacity(0.3),
+              blurRadius: 10,
+              spreadRadius: 2,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.notification_important, color: Colors.white, size: 28),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('HUTANG JATUH TEMPO!',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  )),
+                Text(
+                  '${overdueDebts.length} hutang perlu ditagih',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                  )),
+              ],
+            ),
+            const SizedBox(width: 12),
+            GestureDetector(
+              onTap: () {
+                fToast.removeQueuedCustomToasts();
+                _searchController.text = '';
+                setState(() {});
+              },
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.white24,
+                  shape: BoxShape.circle,
+                ),
+                child: Transform.rotate(
+                  angle: 160, // Konversi derajat ke radian
+                  child: const Icon(
+                    Icons.arrow_outward,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+              ),
+
+            ),
+          ],
+        ),
+      ),
+      gravity: ToastGravity.TOP,
+      toastDuration: const Duration(seconds: 5),
+      fadeDuration: const Duration(milliseconds: 500),
+    );
+  }
+
+  void _showSuccessNotification(String message) {
+    fToast.showToast(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(25),
+            gradient: LinearGradient(
+              colors: [Colors.green.shade600, Colors.green.shade800],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                // ignore: deprecated_member_use
+                color: Colors.green.withOpacity(0.3),
+                blurRadius: 10,
+                spreadRadius: 2,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 28),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  )),
+              ),
+            ],
+          ),
+        ),
+      ),
+      gravity: ToastGravity.TOP,
+      toastDuration: const Duration(seconds: 3),
+      fadeDuration: const Duration(milliseconds: 500),
+    );
+  }
+
+  // ignore: unused_element
+  void _showErrorNotification(String message) {
+    fToast.showToast(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(25),
+            gradient: LinearGradient(
+              colors: [Colors.red.shade600, Colors.red.shade800],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                // ignore: deprecated_member_use
+                color: Colors.red.withOpacity(0.3),
+                blurRadius: 10,
+                spreadRadius: 2,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white, size: 28),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  )),
+              ),
+            ],
+          ),
+        ),
+      ),
+      gravity: ToastGravity.TOP,
+      toastDuration: const Duration(seconds: 3),
+      fadeDuration: const Duration(milliseconds: 500),
+    );
+  }
+
+  void _showInfoNotification(String message) {
+    fToast.showToast(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(25),
+            gradient: LinearGradient(
+              colors: [Colors.blue.shade600, Colors.blue.shade800],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                // ignore: deprecated_member_use
+                color: Colors.blue.withOpacity(0.3),
+                blurRadius: 10,
+                spreadRadius: 2,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.info_outline, color: Colors.white, size: 28),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  )),
+              ),
+            ],
+          ),
+        ),
+      ),
+      gravity: ToastGravity.TOP,
+      toastDuration: const Duration(seconds: 3),
+      fadeDuration: const Duration(milliseconds: 500),
+    );
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -55,104 +285,104 @@ class _DebtScreenState extends State<DebtScreen> {
 
   @override
   Widget build(BuildContext context) {
-  final totalDebt = _debts
-      .where((d) => d.status != 'Lunas')
-      .fold(0.0, (sum, debt) => sum + debt.amount);
-  final overdueDebts = _debts
-      .where((d) => d.dueDate.isBefore(DateTime.now()) && d.status != 'Lunas')
-      .length;
+    final totalDebt = _debts
+        .where((d) => d.status != 'Lunas')
+        .fold(0.0, (sum, debt) => sum + debt.amount);
+    final overdueDebts = _debts
+        .where((d) => d.dueDate.isBefore(DateTime.now()) && d.status != 'Lunas')
+        .length;
 
-  final debtsToDisplay = _searchController.text.isEmpty
-      ? _debts
-      : _debts
-          .where((d) => d.customerName
-              .toLowerCase()
-              .contains(_searchController.text.toLowerCase()))
-          .toList();
+    final debtsToDisplay = _searchController.text.isEmpty
+        ? _debts
+        : _debts
+            .where((d) => d.customerName
+                .toLowerCase()
+                .contains(_searchController.text.toLowerCase()))
+            .toList();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pencatatan Hutang'),
-        backgroundColor: const Color(0xFF084FEA),
+        backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(16),
+          ),
+        ),
       ),
       body: Column(
         children: [
-        // Search Bar
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white, // Biru muda lembut
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.blueGrey,
-                  blurRadius: 8,
-                  offset: const Offset(0, 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blueGrey,
+                    blurRadius: 8,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Cari nama pengutang...',
+                  hintStyle: const TextStyle(color: Colors.blueGrey),
+                  prefixIcon: const Icon(Icons.search, color: Colors.blue),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                ),
+                style: const TextStyle(color: Colors.black87),
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                _buildSummaryCard(
+                  'Total Hutang',
+                  'Rp ${NumberFormat('#,###', 'id_ID').format(totalDebt)}',
+                  Colors.blue,
+                ),
+                const SizedBox(width: 8),
+                _buildSummaryCard(
+                  'Jatuh Tempo',
+                  overdueDebts.toString(),
+                  Colors.red,
                 ),
               ],
             ),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Cari nama pengutang...',
-                hintStyle: const TextStyle(color: Colors.blueGrey),
-                prefixIcon: const Icon(Icons.search, color: Colors.blue),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-              ),
-              style: const TextStyle(color: Colors.black87),
-              onChanged: (_) => setState(() {}),
-            ),
           ),
-        ),
 
-
-        // Summary Cards
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            children: [
-              _buildSummaryCard(
-                'Total Hutang',
-                'Rp ${NumberFormat('#,###', 'id_ID').format(totalDebt)}',
-                Colors.blue,
-              ),
-              const SizedBox(width: 8),
-              _buildSummaryCard(
-                'Jatuh Tempo',
-                overdueDebts.toString(),
-                Colors.red,
-              ),
-            ],
+          Expanded(
+            child: debtsToDisplay.isEmpty
+                ? const Center(child: Text('Tidak ada data hutang.'))
+                : ListView.builder(
+                    itemCount: debtsToDisplay.length,
+                    itemBuilder: (context, index) {
+                      final debt = debtsToDisplay[index];
+                      return _buildDebtCard(debt);
+                    },
+                  ),
           ),
-        ),
-
-        
-
-        // Debt List
-        Expanded(
-          child: debtsToDisplay.isEmpty
-              ? const Center(child: Text('Tidak ada data hutang.'))
-              : ListView.builder(
-                  itemCount: debtsToDisplay.length,
-                  itemBuilder: (context, index) {
-                    final debt = debtsToDisplay[index];
-                    return _buildDebtCard(debt);
-                  },
-                ),
-        ),
-      ],
-    ),
-    floatingActionButton: FloatingActionButton(
-      onPressed: () => _showAddEditDebtModal(context),
-      backgroundColor: const Color(0xFF084FEA),
-      foregroundColor: Colors.white,
-      child: const Icon(Icons.add),
-    ),
-  );
-}
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddEditDebtModal(context),
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
 
   Widget _buildSummaryCard(String title, String value, Color color) {
     return Expanded(
@@ -187,145 +417,140 @@ class _DebtScreenState extends State<DebtScreen> {
   }
 
   Widget _buildDebtCard(Debt debt) {
-  final isOverdue = debt.dueDate.isBefore(DateTime.now()) && debt.status != 'Lunas';
-  final dateFormat = DateFormat('dd MMMM yyyy', 'id_ID');
+    final isOverdue = debt.dueDate.isBefore(DateTime.now()) && debt.status != 'Lunas';
+    final dateFormat = DateFormat('dd MMMM yyyy', 'id_ID');
 
-  // Status colors
-  final statusConfig = {
-    'Lunas': Colors.green.shade700,
-    'Sebagian Lunas': Colors.orange.shade700,
-    'Jatuh Tempo': Colors.red.shade700,
-    'Belum Lunas': Colors.blueGrey.shade700,
-  };
+    final statusConfig = {
+      'Lunas': Colors.green.shade700,
+      'Sebagian Lunas': Colors.orange.shade700,
+      'Jatuh Tempo': Colors.red.shade700,
+      'Belum Lunas': Colors.blueGrey.shade700,
+    };
 
-  final statusColor = statusConfig[debt.status] ?? Colors.blueGrey.shade700;
+    final statusColor = statusConfig[debt.status] ?? Colors.blueGrey.shade700;
 
-  return Card(
-    margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-    elevation: 2,
-    shadowColor: Colors.blueGrey,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(10),
-    ),
-    color: isOverdue ? Colors.red.shade50 : Colors.white,
-    child: InkWell(
-      onTap: () => _showDebtHistoryDialog(debt),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    debt.customerName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Rp. ${NumberFormat('#,###', 'id_ID').format(debt.amount)} • ${debt.status}',
-                    style: TextStyle(
-                      color: statusColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Jatuh Tempo: ${dateFormat.format(debt.dueDate)}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isOverdue ? Colors.red.shade700 : Colors.grey.shade700,
-                      fontSize: 12,
-                    ),
-                  ),
-                  if (debt.notes.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      elevation: 2,
+      shadowColor: Colors.blueGrey,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      color: isOverdue ? Colors.red.shade50 : Colors.white,
+      child: InkWell(
+        onTap: () => _showDebtHistoryDialog(debt),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      'Catatan: ${debt.notes}',
+                      debt.customerName,
                       style: const TextStyle(
-                        fontStyle: FontStyle.italic,
-                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Rp. ${NumberFormat('#,###', 'id_ID').format(debt.amount)} • ${debt.status}',
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Jatuh Tempo: ${dateFormat.format(debt.dueDate)}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isOverdue ? Colors.red.shade700 : Colors.grey.shade700,
+                        fontSize: 12,
+                      ),
+                    ),
+                    if (debt.notes.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Catatan: ${debt.notes}',
+                        style: const TextStyle(
+                          fontStyle: FontStyle.italic,
+                          fontSize: 12,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-            SizedBox(
-              width: 40,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Tooltip(
-                    message: 'Edit Hutang',
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade700,
-                      borderRadius: BorderRadius.circular(4),
+              SizedBox(
+                width: 40,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Tooltip(
+                      message: 'Edit Hutang',
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade700,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      textStyle: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.edit, size: 18),
+                        color: Colors.blue.shade700,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => _showAddEditDebtModal(context, debt: debt),
+                      ),
                     ),
-                    textStyle: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
+                    const SizedBox(height: 4),
+                    Tooltip(
+                      message: 'Hapus Hutang',
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade700,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      textStyle: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.delete, size: 18),
+                        color: Colors.red.shade700,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => _confirmDeleteDebt(debt),
+                      ),
                     ),
-                    child: IconButton(
-                      icon: const Icon(Icons.edit, size: 18),
-                      color: Colors.blue.shade700,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () => _showAddEditDebtModal(context, debt: debt),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Tooltip(
-                    message: 'Hapus Hutang',
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade700,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    textStyle: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.delete, size: 18),
-                      color: Colors.red.shade700,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () => _confirmDeleteDebt(debt),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _showAddEditDebtModal(BuildContext context, {Debt? debt}) {
     _editingDebt = debt;
 
     if (_editingDebt != null) {
       _customerController.text = _editingDebt!.customerName;
-      // --- PERUBAHAN DI SINI ---
-      // Format double menjadi string tanpa .0 jika itu bilangan bulat
       _amountController.text = _editingDebt!.amount.toStringAsFixed(
-          _editingDebt!.amount.truncateToDouble() == _editingDebt!.amount ? 0 : 2
-      );
-      // --- AKHIR PERUBAHAN ---
+          _editingDebt!.amount.truncateToDouble() == _editingDebt!.amount ? 0 : 2);
       _notesController.text = _editingDebt!.notes;
       _selectedDueDate = _editingDebt!.dueDate;
       _selectedStatus = _editingDebt!.status;
@@ -465,7 +690,6 @@ class _DebtScreenState extends State<DebtScreen> {
                                 final newDebtAmount = double.parse(_amountController.text);
 
                                 if (_editingDebt == null) {
-                                  // Tambah Hutang Baru
                                   final newDebt = Debt(
                                     id: _uuid.v4(),
                                     customerName: _customerController.text,
@@ -489,8 +713,8 @@ class _DebtScreenState extends State<DebtScreen> {
                                   setState(() {
                                     _debts.add(newDebt);
                                   });
+                                  _showSuccessNotification('Hutang baru berhasil ditambahkan!');
                                 } else {
-                                  // Update Hutang yang Ada
                                   final updatedDebt = _editingDebt!.copyWith(
                                     customerName: _customerController.text,
                                     amount: newDebtAmount,
@@ -504,13 +728,14 @@ class _DebtScreenState extends State<DebtScreen> {
                                       _debts[index] = updatedDebt;
                                     }
                                   });
+                                  _showSuccessNotification('Data hutang berhasil diperbarui!');
                                 }
                                 await _saveDebts();
                                 if (mounted) Navigator.pop(context);
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF084FEA),
+                              backgroundColor: Colors.blue,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
@@ -547,7 +772,10 @@ class _DebtScreenState extends State<DebtScreen> {
                   _debts.removeWhere((d) => d.id == debt.id);
                 });
                 await _saveDebts();
-                if (mounted) Navigator.pop(context);
+                if (mounted) {
+                  Navigator.pop(context);
+                  _showSuccessNotification('Hutang dari ${debt.customerName} berhasil dihapus!');
+                }
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               child: const Text('Hapus', style: TextStyle(color: Colors.white)),
@@ -607,12 +835,7 @@ class _DebtScreenState extends State<DebtScreen> {
         await _saveDebts();
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Hutang dari ${debt.customerName} berhasil dilunasi!'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          _showSuccessNotification('Hutang dari ${debt.customerName} berhasil dilunasi!');
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const DebtScreen()),
@@ -641,7 +864,7 @@ class _DebtScreenState extends State<DebtScreen> {
                     currentDebt.customerName,
                     style: const TextStyle(color: Colors.white),
                   ),
-                  backgroundColor: const Color(0xFF084FEA),
+                  backgroundColor: Colors.blue,
                 ),
                 body: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -697,10 +920,7 @@ class _DebtScreenState extends State<DebtScreen> {
                               elevation: 1,
                               child: InkWell(
                                 onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('Fungsi Laporan Belum Diimplementasikan')),
-                                  );
+                                  _showInfoNotification('Fitur laporan belum tersedia');
                                 },
                                 child: const Padding(
                                   padding: EdgeInsets.all(12.0),
@@ -720,7 +940,7 @@ class _DebtScreenState extends State<DebtScreen> {
                               elevation: 1,
                               child: InkWell(
                                 onTap: () async {
-                                  Navigator.pop(context); // Close history dialog
+                                  Navigator.pop(context);
                                   await _markDebtAsPaidOff(currentDebt);
                                 },
                                 child: const Padding(
@@ -766,7 +986,7 @@ class _DebtScreenState extends State<DebtScreen> {
                               itemCount: currentDebt.transactions.length,
                               itemBuilder: (context, i) {
                                 final transaction = currentDebt.transactions[i];
-                                final dateFormat = DateFormat('dd MMM yyyy'); // Corrected typo
+                                final dateFormat = DateFormat('dd MMM yyyy');
                                 final amountFormat = NumberFormat('#,###', 'id_ID');
 
                                 return Padding(
@@ -820,7 +1040,7 @@ class _DebtScreenState extends State<DebtScreen> {
                           Expanded(
                             child: ElevatedButton(
                               onPressed: () {
-                                Navigator.pop(context); // Close history dialog
+                                Navigator.pop(context);
                                 _showAddTransactionDialog(context,
                                     debt: currentDebt, transactionType: 'Berikan');
                               },
@@ -833,7 +1053,7 @@ class _DebtScreenState extends State<DebtScreen> {
                           Expanded(
                             child: ElevatedButton(
                               onPressed: () {
-                                Navigator.pop(context); // Close history dialog
+                                Navigator.pop(context);
                                 _showAddTransactionDialog(context,
                                     debt: currentDebt, transactionType: 'Terima');
                               },
@@ -863,17 +1083,17 @@ class _DebtScreenState extends State<DebtScreen> {
 
     String dialogTitleText = transactionType == 'Terima' ? 'Catat Pembayaran' : 'Catat Pemberian Hutang';
     Color buttonColor = transactionType == 'Terima' ? Colors.green : Colors.red;
-    IconData dialogIcon = transactionType == 'Terima' ? Icons.payments : Icons.send_to_mobile; // Choose appropriate icon
+    IconData dialogIcon = transactionType == 'Terima' ? Icons.payments : Icons.send_to_mobile;
     Color iconColor = transactionType == 'Terima' ? Colors.green : Colors.red;
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), // Rounded corners
-          titlePadding: EdgeInsets.zero, // Remove default title padding
-          contentPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0), // Adjust content padding
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0), // Adjust actions padding
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          titlePadding: EdgeInsets.zero,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
           title: Column(
             children: [
               const SizedBox(height: 20),
@@ -889,18 +1109,18 @@ class _DebtScreenState extends State<DebtScreen> {
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87, // Darker color for title
+                    color: Colors.black87,
                   ),
                 ),
               ),
-              const Divider(thickness: 1, indent: 20, endIndent: 20), // A visual separator
+              const Divider(thickness: 1, indent: 20, endIndent: 20),
             ],
           ),
           content: Form(
             key: transactionFormKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start, // Align text to start
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Untuk: ${debt.customerName}',
@@ -915,8 +1135,8 @@ class _DebtScreenState extends State<DebtScreen> {
                   controller: transactionAmountController,
                   decoration: InputDecoration(
                     labelText: 'Jumlah ${transactionType == 'Terima' ? 'Pembayaran' : 'Hutang'}',
-                    border: const OutlineInputBorder(), // Add border
-                    prefixText: 'Rp ', // Add currency prefix
+                    border: const OutlineInputBorder(),
+                    prefixText: 'Rp ',
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) {
@@ -938,7 +1158,7 @@ class _DebtScreenState extends State<DebtScreen> {
                   controller: transactionNotesController,
                   decoration: const InputDecoration(
                     labelText: 'Catatan Transaksi (Opsional)',
-                    border: OutlineInputBorder(), // Add border
+                    border: OutlineInputBorder(),
                   ),
                   maxLines: 2,
                 ),
@@ -947,13 +1167,13 @@ class _DebtScreenState extends State<DebtScreen> {
           ),
           actions: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Distribute buttons evenly
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.pop(context),
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors.blueGrey, // Softer color for cancel
+                      foregroundColor: Colors.blueGrey,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     child: const Text('Batal'),
@@ -1009,6 +1229,7 @@ class _DebtScreenState extends State<DebtScreen> {
                           await _saveDebts();
                           if (mounted) {
                             Navigator.pop(context);
+                            _showSuccessNotification('Transaksi hutang berhasil dicatat!');
                             _showDebtHistoryDialog(updatedDebt);
                           }
                         }

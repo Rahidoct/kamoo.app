@@ -18,6 +18,7 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<Product> _allProducts = [];
   List<Product> _filteredProducts = [];
+  final Set<Product> _selectedProducts = {};
 
   @override
   void initState() {
@@ -49,11 +50,34 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
     });
   }
 
+  void _toggleProductSelection(Product product) {
+    setState(() {
+      if (_selectedProducts.contains(product)) {
+        _selectedProducts.remove(product);
+      } else {
+        _selectedProducts.add(product);
+      }
+    });
+  }
+
+  void _continueTransaction() {
+    if (_selectedProducts.isNotEmpty) {
+      // Mengembalikan daftar Product yang terpilih ke layar sebelumnya
+      Navigator.pop(context, _selectedProducts.toList()); // Mengembalikan list Product
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pilih setidaknya satu produk untuk melanjutkan transaksi.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pilih Produk'),
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
@@ -67,6 +91,8 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
+                filled: true,
+                fillColor: Colors.grey[100],
               ),
             ),
           ),
@@ -85,15 +111,28 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
                     itemCount: _filteredProducts.length,
                     itemBuilder: (context, index) {
                       final product = _filteredProducts[index];
+                      final isSelected = _selectedProducts.contains(product);
+
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: Stack(
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors.blue[100],
+                                color: isSelected ? Colors.blue[200] : Colors.blue[100],
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.blue, width: 2),
+                                border: Border.all(
+                                  color: isSelected ? Colors.blue[700]! : Colors.blue,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    // ignore: deprecated_member_use
+                                    color: Colors.grey.withOpacity(0.2),
+                                    blurRadius: 5,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
                               ),
                               child: Row(
                                 children: [
@@ -104,6 +143,7 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(12),
                                       color: Colors.white,
+                                      border: Border.all(color: Colors.grey[300]!),
                                     ),
                                     child: product.imagePath != null && product.imagePath!.isNotEmpty
                                         ? ClipRRect(
@@ -136,20 +176,24 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
                                           const SizedBox(height: 4),
                                           Text(
                                             'Rp. ${NumberFormat('#,###', 'id_ID').format(product.price)}',
-                                            style: const TextStyle(color: Colors.black87),
+                                            style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
                                           ),
                                           Text(
                                             'Stok: ${product.stock.toStringAsFixed(0)} ${product.unit}',
-                                            style: const TextStyle(fontSize: 12),
+                                            style: const TextStyle(fontSize: 12, color: Colors.black),
                                           ),
                                         ],
                                       ),
                                     ),
                                   ),
+                                  if (isSelected)
+                                    const Padding(
+                                      padding: EdgeInsets.only(right: 16.0),
+                                      child: Icon(Icons.check_circle, color: Colors.green, size: 28),
+                                    ),
                                 ],
                               ),
                             ),
-                            // Sobekan kiri
                             Positioned(
                               left: -10,
                               top: 20,
@@ -162,7 +206,6 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
                                 ),
                               ),
                             ),
-                            // Sobekan kanan
                             Positioned(
                               right: -10,
                               top: 20,
@@ -175,14 +218,13 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
                                 ),
                               ),
                             ),
-                            // Gesture untuk memilih produk
                             Positioned.fill(
                               child: Material(
                                 color: Colors.transparent,
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(16),
                                   onTap: () {
-                                    Navigator.pop(context, product);
+                                    _toggleProductSelection(product);
                                   },
                                 ),
                               ),
@@ -196,6 +238,26 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
               },
             ),
           ),
+          if (_selectedProducts.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton(
+                onPressed: _continueTransaction,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 5,
+                ),
+                child: Text(
+                  'Lanjut Transaksi (${_selectedProducts.length} item dipilih)',
+                  style: const TextStyle(fontSize: 18),
+                ),
+              ),
+            ),
         ],
       ),
     );

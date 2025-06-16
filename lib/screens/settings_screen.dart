@@ -626,10 +626,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.bold,
+            
           ),
         ),
         centerTitle: true,
-        backgroundColor: Theme.of(context).primaryColor,
+        backgroundColor: Colors.blue,
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         shape: const RoundedRectangleBorder(

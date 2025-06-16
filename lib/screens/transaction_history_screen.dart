@@ -9,9 +9,6 @@ import '../services/transaction_service.dart';
 import '../services/customer_service.dart';
 import 'receipt_screen.dart'; 
 
-// Definisi konstanta untuk warna utama aplikasi
-const Color kPrimaryColor = Color(0xFF084FEA);
-
 class TransactionHistoryScreen extends StatefulWidget {
   const TransactionHistoryScreen({super.key});
 
@@ -152,7 +149,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
-                                    color: kPrimaryColor,
+                                    color: Colors.blue,
                                   ),
                                 ),
                                 Text(

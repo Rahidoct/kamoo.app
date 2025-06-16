@@ -259,7 +259,7 @@ class _AccountingScreenState extends State<AccountingScreen> {
   void _showEntryModal({AccountEntry? entry, required AccountEntryType type}) {
     bool isEditing = entry != null;
     _descriptionController.text = isEditing ? entry.description : '';
-    _amountController.text = isEditing ? NumberFormat('#,###', 'id_ID').format(entry.amount).replaceAll(',', '') : '';
+    _amountController.text = isEditing ? NumberFormat('#,###', 'id_ID').format(entry.amount).replaceAll('.', '') : '';
 
     showModalBottomSheet(
       context: context,
@@ -417,7 +417,7 @@ class _AccountingScreenState extends State<AccountingScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pembukuan'),
-        backgroundColor: const Color(0xFF084FEA),
+        backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         elevation: 0,
         shape: const RoundedRectangleBorder(

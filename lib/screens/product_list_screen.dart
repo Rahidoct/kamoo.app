@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Untuk format mata uang
-import 'dart:io'; // Untuk File gambar
-
-// Pastikan path import ini sesuai dengan struktur proyek Anda
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:intl/intl.dart';
+import 'dart:io';
 import 'package:kamoo/models/product.dart';
-import 'package:kamoo/services/product_service.dart'; // Sudah benar
-import 'package:kamoo/screens/barcode_scanner_screen.dart'; 
-import 'package:kamoo/screens/product_form_screen.dart'; 
+import 'package:kamoo/services/product_service.dart';
+import 'package:kamoo/screens/barcode_scanner_screen.dart';
+import 'package:kamoo/screens/product_form_screen.dart';
 
 class ProductListScreen extends StatefulWidget {
   const ProductListScreen({super.key});
@@ -16,17 +15,16 @@ class ProductListScreen extends StatefulWidget {
 }
 
 class _ProductListScreenState extends State<ProductListScreen> {
-  // TIDAK PERLU menginisialisasi ProductService sebagai instance
-  // karena semua metodenya static. Kita akan langsung memanggil ProductService.namaMetode()
-
   late Future<List<Product>> _productsFuture;
   final TextEditingController _searchController = TextEditingController();
+  late FToast fToast;
 
   @override
   void initState() {
     super.initState();
+    fToast = FToast();
+    fToast.init(context);
     _loadProducts();
-    // Menggunakan addListener untuk memuat ulang produk saat teks pencarian berubah
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -37,12 +35,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
     super.dispose();
   }
 
-  // --- Fungsi untuk Memuat Produk ---
   void _loadProducts({String? searchQuery}) {
     setState(() {
       if (searchQuery != null && searchQuery.isNotEmpty) {
-        // Jika ada query pencarian, kita filter dari semua produk
-        // UBAH: _productService.getAllProducts() menjadi ProductService.getProducts()
         _productsFuture = ProductService.getProducts().then((allProducts) {
           return allProducts.where((product) {
             final lowerCaseQuery = searchQuery.toLowerCase();
@@ -51,8 +46,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
           }).toList();
         });
       } else {
-        // Jika tidak ada query, muat semua produk
-        // UBAH: _productService.getAllProducts() menjadi ProductService.getProducts()
         _productsFuture = ProductService.getProducts();
       }
     });
@@ -62,22 +55,105 @@ class _ProductListScreenState extends State<ProductListScreen> {
     _loadProducts(searchQuery: _searchController.text);
   }
 
-  // --- Fungsi untuk Scan Barcode dan Pencarian ---
   Future<void> _scanBarcodeForSearch() async {
-    // Memanggil screen BarcodeScannerScreen
     final String? barcodeResult = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const BarcodeScannerScreen()),
     );
 
     if (barcodeResult != null && barcodeResult.isNotEmpty) {
-      // Set hasil scan ke controller pencarian dan muat ulang produk
       _searchController.text = barcodeResult;
       _loadProducts(searchQuery: barcodeResult);
     }
   }
 
-  // --- Fungsi Konfirmasi Hapus Produk ---
+  // ========== NOTIFIKASI MENARIK ==========
+  void _showSuccessNotification(String message) {
+    fToast.showToast(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(25),
+          gradient: const LinearGradient(
+            colors: [Colors.green, Colors.green],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              // ignore: deprecated_member_use
+              color: Colors.green.withOpacity(0.3),
+              blurRadius: 10,
+              spreadRadius: 2,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white, size: 28),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      gravity: ToastGravity.TOP,
+      toastDuration: const Duration(seconds: 3),
+    );
+  }
+
+  void _showErrorNotification(String message) {
+    fToast.showToast(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(25),
+          gradient: const LinearGradient(
+            colors: [Colors.redAccent, Colors.redAccent],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              // ignore: deprecated_member_use
+              color: Colors.red.withOpacity(0.3),
+              blurRadius: 10,
+              spreadRadius: 2,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white, size: 28),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                message.length > 50 ? '${message.substring(0, 50)}...' : message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      gravity: ToastGravity.TOP,
+      toastDuration: const Duration(seconds: 4),
+    );
+  }
+
   Future<void> _confirmDelete(String productId) async {
     final bool? confirm = await showDialog<bool>(
       context: context,
@@ -116,12 +192,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              backgroundColor: Colors.grey[300],
+              backgroundColor: Colors.blueGrey,
             ),
             child: const Text(
               'Batal',
               style: TextStyle(
-                color: Colors.black87,
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -150,42 +226,19 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
     if (confirm == true) {
       try {
-        // UBAH: _productService.deleteProduct() menjadi ProductService.deleteProduct()
         await ProductService.deleteProduct(productId); 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text(
-                'Barang berhasil dihapus!',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              backgroundColor: Colors.green,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              margin: const EdgeInsets.all(20),
-            ),
-          );
-          _loadProducts(searchQuery: _searchController.text); // Muat ulang setelah hapus
+          _showSuccessNotification('Barang berhasil dihapus!');
+          _loadProducts(searchQuery: _searchController.text);
         }
       } catch (e) {
-        // shared_preferences tidak memiliki konsep foreign key constraint seperti database relasional.
-        // Jadi pesan error ini kemungkinan tidak akan muncul persis sama.
-        // Anda mungkin perlu menambahkan logic untuk cek apakah produk masih "digunakan"
-        // di keranjang atau riwayat transaksi jika Anda menyimpan data tersebut di shared_preferences juga.
         String errorMessage = 'Gagal menghapus barang.';
-        if (e.toString().contains('FOREIGN KEY constraint failed')) { // Ini untuk SQLite/Database
+        if (e.toString().contains('FOREIGN KEY constraint failed')) {
           errorMessage = 'Produk tidak bisa dihapus karena digunakan untuk riwayat transaksi.';
         }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.red,
-            content: Text(errorMessage),
-          ),
-        );
+        if (mounted) {
+          _showErrorNotification(errorMessage);
+        }
       }
     }
   }
@@ -216,8 +269,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black,
-                          blurRadius: 6,
+                          color: Colors.blueGrey,
+                          blurRadius: 3,
                           offset: const Offset(0, 3),
                         ),
                       ],
@@ -252,7 +305,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         ),
                         contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                       ),
-                      // onChanged: (value) => _loadProducts(searchQuery: value), // Listener sudah di initState
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -353,7 +405,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   } else {
                     final products = snapshot.data!;
                     return ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 80), // Tambahkan padding agar FAB tidak menutupi item terakhir
+                      padding: const EdgeInsets.only(bottom: 80),
                       itemCount: products.length,
                       itemBuilder: (context, index) {
                         final product = products[index];
@@ -363,9 +415,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black,
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
+                                color: Colors.blueGrey,
+                                blurRadius: 3,
+                                offset: const Offset(0, 1),
                               ),
                             ],
                           ),
@@ -377,7 +429,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: () async {
-                                // Aksi ketika item di-tap (misalnya, edit)
                                 final result = await Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -404,7 +455,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                           ? ClipRRect(
                                                 borderRadius: BorderRadius.circular(8),
                                                 child: Image.file(
-                                                  File(product.imagePath!), // Menggunakan File dari dart:io
+                                                  File(product.imagePath!),
                                                   fit: BoxFit.cover,
                                                   errorBuilder: (context, error, stackTrace) =>
                                                       Center(
@@ -452,12 +503,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                           Row(
                                             children: [
                                               Text(
-                                                // Gunakan NumberFormat untuk format mata uang
                                                 'Rp. ${NumberFormat('#,###', 'id_ID').format(product.price)}',
                                                 style: const TextStyle(
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.w600,
-                                                  color: Color(0xFF084FEA),
+                                                  color: Colors.green,
                                                 ),
                                               ),
                                               const SizedBox(width: 16),
@@ -466,7 +516,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                                 style: TextStyle(
                                                   fontSize: 14,
                                                   color: product.stock > 0
-                                                      ? Colors.green[600]
+                                                      ? Colors.blue[600]
                                                       : Colors.red[600],
                                                 ),
                                               ),
@@ -484,7 +534,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                           icon: Container(
                                             padding: const EdgeInsets.all(6),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFF084FEA), 
+                                              color: Colors.orangeAccent, 
                                               borderRadius: BorderRadius.circular(8),
                                             ),
                                             child: const Icon(
@@ -510,16 +560,15 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                           icon: Container(
                                             padding: const EdgeInsets.all(6),
                                             decoration: BoxDecoration(
-                                              color: Colors.red, // Latar belakang merah
+                                              color: Colors.red,
                                               borderRadius: BorderRadius.circular(8),
                                             ),
                                             child: const Icon(
                                               Icons.delete_outline,
-                                              color: Colors.white, // UBAH INI: Warna ikon menjadi putih
+                                              color: Colors.white,
                                               size: 20,
                                             ),
                                           ),
-                                          // UBAH: _productService.deleteProduct() menjadi ProductService.deleteProduct()
                                           onPressed: () => _confirmDelete(product.id!),
                                           tooltip: 'Hapus',
                                         ),
@@ -540,7 +589,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
           ],
         ),
       ),
-      // FLOATING ACTION BUTTON
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final result = await Navigator.push(
@@ -551,10 +599,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
             _loadProducts(searchQuery: _searchController.text);
           }
         },
-        backgroundColor: const Color(0xFF084FEA),
-        foregroundColor: Colors.white,
-        tooltip: 'Tambah Barang Baru',
-        child: const Icon(Icons.add_box),
+        backgroundColor: Colors.blue,
+        child: const Icon(Icons.add_box, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );

@@ -100,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.deepPurple[50],
+      backgroundColor: Colors.white,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -127,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 "Silakan login untuk mulai transaksi",
                 style: TextStyle(
                   fontSize: 16,
-                  color: Color(0xFF084FEA),
+                  color: Color.fromARGB(255, 0, 4, 12),
                 ),
                 textAlign: TextAlign.center, // Pusatkan teks
               ),
@@ -145,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF084FEA), width: 1), // Warna biru saat tidak fokus
+                    borderSide: const BorderSide(color: Color.fromARGB(255, 79, 102, 150)), // Warna biru saat tidak fokus
                   ),
                   // --- END MODIFIKASI ---
                 ),
@@ -164,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF084FEA), width: 1), // Warna biru saat tidak fokus
+                    borderSide: const BorderSide(color: Color.fromARGB(255, 79, 102, 150), width: 1), // Warna biru saat tidak fokus
                   ),
                   // --- END MODIFIKASI ---
                   suffixIcon: IconButton(
@@ -190,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     backgroundColor: Color(0xFF084FEA),
                   ),
                   onPressed: _login,
-                  child: const Text("Login", style: TextStyle(color: Colors.white)),
+                  child: const Text("LOGIN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 12),
@@ -210,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: <TextSpan>[
                         TextSpan(
                           text: 'Daftar',
-                          style: TextStyle(color: Color(0xFF084FEA)),
+                          style: TextStyle(color: Color(0xFF084FEA),fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),

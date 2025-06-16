@@ -619,7 +619,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         centerTitle: true,
-        backgroundColor: const Color(0xFF084FEA),
+        backgroundColor: Colors.blue,
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         shape: const RoundedRectangleBorder(
@@ -631,7 +631,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             DrawerHeader(
               decoration: const BoxDecoration(
-                color: Color(0xFF084FEA),
+                color: Colors.blue,
               ),
               child: Align(
                 alignment: Alignment.bottomLeft,
@@ -755,12 +755,11 @@ class _HomeScreenState extends State<HomeScreen> {
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Beranda'),
               BottomNavigationBarItem(icon: Icon(Icons.inventory), label: 'Produk'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.point_of_sale), label: 'Transaksi'),
+              BottomNavigationBarItem(icon: Icon(Icons.point_of_sale), label: 'Transaksi'),
               BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Riwayat'),
             ],
             currentIndex: _selectedIndex,
-            backgroundColor: const Color(0xFF084FEA),
+            backgroundColor: Colors.blue,
             selectedItemColor: Colors.white,
             unselectedItemColor: Colors.white70,
             onTap: _onItemTapped,
