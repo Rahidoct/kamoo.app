@@ -1,12 +1,12 @@
 class StoreInfo {
-  final String? nama;
+  final String? toko;
   final String? address;
   final String? phoneNumber;
   final String? logoPath;
   final String? notes; // <-- TAMBAHKAN BARIS INI
 
   StoreInfo({
-    this.nama,
+    this.toko,
     this.address,
     this.phoneNumber,
     this.logoPath,
@@ -15,7 +15,7 @@ class StoreInfo {
 
   factory StoreInfo.fromMap(Map<String, dynamic> map) {
     return StoreInfo(
-      nama: map['nama'],
+      toko: map['toko'],
       address: map['address'],
       phoneNumber: map['phoneNumber'],
       logoPath: map['storeLogoPath'], // Sesuaikan jika kunci di map berbeda
@@ -25,7 +25,7 @@ class StoreInfo {
 
   Map<String, dynamic> toMap() {
     return {
-      'nama': nama,
+      'toko': toko,
       'address': address,
       'phoneNumber': phoneNumber,
       'storeLogoPath': logoPath, // Sesuaikan jika kunci di map berbeda

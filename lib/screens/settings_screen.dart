@@ -119,7 +119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           'Ubah Kata Sandi',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
+                                color: Colors.blue,
                               ),
                         ),
                         IconButton(
@@ -209,7 +209,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor,
+                          backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -256,7 +256,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).primaryColor),
+          borderSide: BorderSide(color: Colors.blue),
         ),
         filled: true,
         fillColor: Colors.grey.shade50,
@@ -264,7 +264,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         suffixIcon: IconButton(
           icon: Icon(
             isVisible ? Icons.visibility : Icons.visibility_off,
-            color: Theme.of(context).primaryColor,
+            color: Colors.blue,
           ),
           onPressed: onToggleVisibility,
         ),
@@ -322,7 +322,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           'Pengaturan Profil',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
+                                color: Colors.blue,
                               ),
                         ),
                         IconButton(
@@ -355,7 +355,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             right: 0,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Theme.of(context).primaryColor,
+                                color: Colors.blue,
                                 shape: BoxShape.circle,
                                 border: Border.all(color: Colors.white, width: 2),
                               ),
@@ -411,7 +411,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor,
+                          backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -459,7 +459,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).primaryColor),
+          borderSide: BorderSide(color: Colors.blue),
         ),
         filled: true,
         fillColor: readOnly ? Colors.grey.shade100 : Colors.grey.shade50,
@@ -518,7 +518,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           'Pengaturan Toko',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
+                                color: Colors.blue,
                               ),
                         ),
                         IconButton(
@@ -551,7 +551,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             right: 0,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Theme.of(context).primaryColor,
+                                color: Colors.blue,
                                 shape: BoxShape.circle,
                                 border: Border.all(color: Colors.white, width: 2),
                               ),
@@ -609,7 +609,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor,
+                          backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -668,7 +668,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           'Pengaturan Nota',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
+                                color: Colors.blue,
                               ),
                         ),
                         IconButton(
@@ -707,7 +707,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor,
+                          backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -850,7 +850,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    '© 2023 Kamoo Team',
+                    '© 2023 Team Kamoo | Karena Kamoo Nomor Satu.',
                     style: TextStyle(
                       color: Colors.grey.shade600,
                       fontSize: 12,
@@ -877,12 +877,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         height: 40,
         decoration: BoxDecoration(
           // ignore: deprecated_member_use
-          color: Theme.of(context).primaryColor.withOpacity(0.2),
+          color: Colors.blue.withOpacity(0.2),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
           icon,
-          color: Theme.of(context).primaryColor,
+          color: Colors.blue,
         ),
       ),
       title: Text(

@@ -1,8 +1,7 @@
 # kamoo
 
 ### FITUR ONPROSES
-- [PEGATURAN] implementasi 1. pengaturan nota (cetak struk, ucapan dibawah nota yang berelasi dengan info toko). 2. tampilan (tema utama, dan dark). 3. Backup Data
-
+- [PEGATURAN] implementasi 1. pengaturan nota (cetak struk). 2. tampilan (tema utama, dan dark). 3. Backup Data
 
 ### FITUR SELANJUTNYA
 - [BANTUAN]

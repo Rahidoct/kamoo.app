@@ -30,7 +30,7 @@ class PostTransactionScreen extends StatelessWidget {
 
   final NumberFormat _currencyFormatter =
       NumberFormat('#,###', 'id_ID');
-  final DateFormat _dateFormatter = DateFormat('dd MMMM HH:mm', 'id_ID');
+  final DateFormat _dateFormatter = DateFormat('dd MMMM yyyy HH:mm', 'id_ID');
 
   Widget _buildReceiptInfo(String label, String value) {
     return Padding(
@@ -137,7 +137,7 @@ class PostTransactionScreen extends StatelessWidget {
                         ),
                       Center(
                         child: Text(
-                          storeInfo?.nama ?? 'Nama Toko Anda',
+                          storeInfo?.toko ?? 'Nama Toko Anda',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -217,13 +217,25 @@ class PostTransactionScreen extends StatelessWidget {
                       _buildTotalRow('Uang Dibayar:', paidAmount),
                       _buildTotalRow('Kembalian:', changeAmount, isChange: true),
                       const Divider(thickness: 2, height: 20),
-                      const Center(
-                        child: Text(
-                          'Terima kasih, Jangan lupa mampir lagi yah.!',
-                          style: TextStyle(fontSize: 15, fontStyle: FontStyle.italic),
-                          textAlign: TextAlign.center,
+                      // --- Menampilkan catatan/ucapan nota dari storeInfo ---
+                      if (storeInfo?.notes?.isNotEmpty ?? false)
+                        Center(
+                          child: Text(
+                            storeInfo!.notes!,
+                            style: const TextStyle(
+                                fontSize: 16, fontStyle: FontStyle.italic),
+                            textAlign: TextAlign.center,
+                          ),
+                        )
+                      else
+                        const Center(
+                          child: Text(
+                            'Terima kasih, Jangan lupa datang lagi yah.!', // Default jika tidak ada catatan
+                            style: TextStyle(
+                                fontSize: 16, fontStyle: FontStyle.italic),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
-                      ),
                       const SizedBox(height: 20),
 
                       Center(

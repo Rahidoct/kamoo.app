@@ -27,7 +27,7 @@ class ReceiptScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final NumberFormat currencyFormatter = NumberFormat('#,###', 'id_ID');
-    final DateFormat dateFormatter = DateFormat('dd MMMM HH:mm', 'id_ID');
+    final DateFormat dateFormatter = DateFormat('dd MMMM yyyy HH:mm', 'id_ID');
 
     return Scaffold(
       appBar: AppBar(
@@ -82,7 +82,7 @@ class ReceiptScreen extends StatelessWidget {
                               ),
                             Center(
                               child: Text(
-                                storeInfo?.nama ?? 'Nama Toko Anda',
+                                storeInfo?.toko ?? 'Nama Toko Anda',
                                 style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
