@@ -14,9 +14,11 @@ class LocalAuthService {
     {
     String? nama,
     String? toko,
-    // Tambahkan bidang baru di sini
     String? address,
     String? phoneNumber,
+    String? imagePath,
+    String? storeLogoPath,
+    String? notes, // Tambahkan bidang baru untuk catatan
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final userList = await _getUserList();
@@ -28,18 +30,19 @@ class LocalAuthService {
     }
 
     // Hashing password sebelum menyimpan
-    final String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt()); // Menggunakan BCrypt.hashpw
+    final String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
 
     userList.add({
       'username': username,
       'email': email,
-      'hashedPassword': hashedPassword, // Simpan password yang sudah di-hash
+      'hashedPassword': hashedPassword, 
       'nama': nama ?? '',
       'toko': toko ?? '',
-      'imagePath': null, // Inisialisasi imagePath (foto profil)
-      'storeLogoPath': null, // Inisialisasi storeLogoPath
-      'address': address ?? '', // Inisialisasi address
-      'phoneNumber': phoneNumber ?? '', // Inisialisasi phoneNumber
+      'imagePath': imagePath,
+      'storeLogoPath': storeLogoPath,
+      'address': address ?? '',
+      'phoneNumber': phoneNumber ?? '',
+      'notes': notes ?? '', // Simpan catatan
     });
 
     await prefs.setString(_usersKey, jsonEncode(userList));
@@ -53,7 +56,7 @@ class LocalAuthService {
     // Cari user berdasarkan email
     final user = userList.firstWhere(
       (u) => u['email'] == email,
-      orElse: () => {}, // Mengembalikan map kosong jika tidak ditemukan
+      orElse: () => {},
     );
 
     if (user.isEmpty) {
@@ -101,15 +104,28 @@ class LocalAuthService {
         await prefs.setString(_loggedInUserKey, jsonEncode(loggedInUser));
       }
     } else {
+      // Opsi: tambahkan penanganan kesalahan jika user tidak ditemukan
+      // print('User with email $email not found.');
     }
   }
 
-  /// Update user profile fields (nama, toko, address, phoneNumber).
-  static Future<void> updateUserProfile(String email, {String? nama, String? toko, String? address, String? phoneNumber}) async {
+  /// Update user profile fields (nama, toko, address, phoneNumber, imagePath, storeLogoPath, notes).
+  static Future<void> updateUserProfile(String email, {
+    String? nama,
+    String? toko,
+    String? address,
+    String? phoneNumber,
+    String? imagePath,
+    String? storeLogoPath,
+    String? notes, // Tambah parameter notes
+  }) async {
     if (nama != null) await updateUserField(email, 'nama', nama);
     if (toko != null) await updateUserField(email, 'toko', toko);
     if (address != null) await updateUserField(email, 'address', address);
     if (phoneNumber != null) await updateUserField(email, 'phoneNumber', phoneNumber);
+    if (imagePath != null) await updateUserField(email, 'imagePath', imagePath);
+    if (storeLogoPath != null) await updateUserField(email, 'storeLogoPath', storeLogoPath);
+    if (notes != null) await updateUserField(email, 'notes', notes); // Perbarui notes
   }
 
   /// Update user password after validating current password.
@@ -174,7 +190,6 @@ class LocalAuthService {
     return user?['imagePath'] as String?;
   }
 
-  // Tambahkan getter baru
   static Future<String?> getStoreLogoPath() async {
     final user = await getLoggedInUser();
     return user?['storeLogoPath'] as String?;
@@ -188,6 +203,12 @@ class LocalAuthService {
   static Future<String?> getPhoneNumber() async {
     final user = await getLoggedInUser();
     return user?['phoneNumber'] as String?;
+  }
+
+  // Tambahkan getter baru untuk catatan
+  static Future<String?> getNotes() async {
+    final user = await getLoggedInUser();
+    return user?['notes'] as String?;
   }
 
   /// Logout user yang sedang login

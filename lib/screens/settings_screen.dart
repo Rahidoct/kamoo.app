@@ -15,6 +15,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmNewPasswordController = TextEditingController();
 
+  // Controller untuk catatan/ucapan di bawah nota
+  final TextEditingController _receiptNotesController = TextEditingController();
+
   bool isCurrentPasswordVisible = false;
   bool isNewPasswordVisible = false;
   bool isConfirmNewPasswordVisible = false;
@@ -24,6 +27,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadUserEmail();
+    _loadReceiptNotes(); // Panggil fungsi untuk memuat catatan nota
   }
 
   @override
@@ -31,6 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmNewPasswordController.dispose();
+    _receiptNotesController.dispose(); // Jangan lupa dispose controller catatan nota
     super.dispose();
   }
 
@@ -39,6 +44,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (userMap != null) {
       setState(() {
         _currentUserEmail = userMap['email'] as String;
+      });
+    }
+  }
+
+  // Fungsi baru untuk memuat catatan nota dari LocalAuthService
+  Future<void> _loadReceiptNotes() async {
+    final notes = await LocalAuthService.getNotes(); // Asumsi LocalAuthService.getNotes() mengambil catatan nota
+    if (notes != null) {
+      setState(() {
+        _receiptNotesController.text = notes;
       });
     }
   }
@@ -103,9 +118,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Text(
                           'Ubah Kata Sandi',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor,
+                              ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.close),
@@ -306,9 +321,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Text(
                           'Pengaturan Profil',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor,
+                              ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.close),
@@ -324,8 +339,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           CircleAvatar(
                             radius: 60,
                             backgroundColor: Colors.grey.shade200,
-                            backgroundImage: userProfileImage != null 
-                                ? FileImage(userProfileImage!) 
+                            backgroundImage: userProfileImage != null
+                                ? FileImage(userProfileImage!)
                                 : null,
                             child: userProfileImage == null
                                 ? Icon(
@@ -426,10 +441,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String label,
     required IconData icon,
     bool readOnly = false,
+    int maxLines = 1, // Default untuk teks biasa
   }) {
     return TextFormField(
       controller: controller,
       readOnly: readOnly,
+      maxLines: maxLines, // Tambahkan maxLines di sini
       decoration: InputDecoration(
         labelText: label,
         border: OutlineInputBorder(
@@ -500,9 +517,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Text(
                           'Pengaturan Toko',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor,
+                              ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.close),
@@ -518,8 +535,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           CircleAvatar(
                             radius: 60,
                             backgroundColor: Colors.grey.shade200,
-                            backgroundImage: storeLogo != null 
-                                ? FileImage(storeLogo!) 
+                            backgroundImage: storeLogo != null
+                                ? FileImage(storeLogo!)
                                 : null,
                             child: storeLogo == null
                                 ? Icon(
@@ -616,6 +633,104 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // Fungsi baru untuk modal pengaturan nota
+  void _showReceiptSettingsModal() async {
+    // Controller _receiptNotesController sudah diinisialisasi di initState dengan data dari LocalAuthService
+    // Jadi, cukup panggil clear jika perlu, atau biarkan nilai terakhir yang tersimpan.
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+          ),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 24,
+          ),
+          child: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setModalState) {
+              return SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Pengaturan Nota',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Masukkan ucapan terima kasih atau catatan lain yang akan muncul di bagian bawah setiap nota.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildProfileTextField(
+                      context,
+                      controller: _receiptNotesController,
+                      label: 'Ucapan/Catatan Nota',
+                      icon: Icons.notes, // Menggunakan ikon yang lebih relevan
+                      maxLines: 5, // Izinkan lebih banyak baris untuk catatan
+                    ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (_currentUserEmail != null) {
+                            await LocalAuthService.updateUserField(
+                                _currentUserEmail!, 'notes', _receiptNotesController.text);
+                            if (mounted) {
+                              _showCustomSnackBar(context, 'Ucapan nota berhasil disimpan!');
+                              Navigator.pop(context);
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 2,
+                        ),
+                        child: const Text(
+                          'Simpan Ucapan',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -626,7 +741,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            
           ),
         ),
         centerTitle: true,
@@ -666,7 +780,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
-            
             Card(
               elevation: 2,
               margin: const EdgeInsets.only(bottom: 16),
@@ -682,16 +795,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onTap: _showChangePasswordModal,
                   ),
                   const Divider(height: 1, indent: 16, endIndent: 16),
+                  // Panggil modal pengaturan nota terpisah
                   _buildSettingItem(
                     context,
                     icon: Icons.receipt,
                     title: 'Pengaturan Nota',
-                    onTap: () {},
+                    onTap: _showReceiptSettingsModal, // Memanggil modal baru di sini
                   ),
                 ],
               ),
             ),
-            
             Card(
               elevation: 2,
               margin: const EdgeInsets.only(bottom: 16),
@@ -716,7 +829,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
-            
             const SizedBox(height: 20),
             Center(
               child: Column(

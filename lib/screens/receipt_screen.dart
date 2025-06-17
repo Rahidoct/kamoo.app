@@ -27,7 +27,7 @@ class ReceiptScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final NumberFormat currencyFormatter = NumberFormat('#,###', 'id_ID');
-    final DateFormat dateFormatter = DateFormat('dd MMMM yyyy HH:mm', 'id_ID');
+    final DateFormat dateFormatter = DateFormat('dd MMMM HH:mm', 'id_ID');
 
     return Scaffold(
       appBar: AppBar(
@@ -59,7 +59,7 @@ class ReceiptScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       CustomPaint(
-                        size: Size(double.infinity, 20),
+                        size: const Size(double.infinity, 20),
                         painter: SerratedEdgePainter(isTop: true),
                       ),
                       Padding(
@@ -119,7 +119,10 @@ class ReceiptScreen extends StatelessWidget {
                             ),
                             const Divider(thickness: 2, height: 20),
 
-                            _buildReceiptInfo('Tanggal Transaksi:', dateFormatter.format(transaction.transactionDate.toLocal())),
+                            _buildReceiptInfo(
+                                'Tanggal Transaksi:',
+                                dateFormatter.format(
+                                    transaction.transactionDate.toLocal())),
                             _buildReceiptInfo('ID Transaksi:', transaction.id),
                             if (customer != null && customer?.id != 'umum')
                               _buildReceiptInfo('Pelanggan:', customer!.name),
@@ -127,7 +130,8 @@ class ReceiptScreen extends StatelessWidget {
 
                             const Text(
                               'Daftar Belanja:',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 8),
                             ListView.builder(
@@ -137,9 +141,11 @@ class ReceiptScreen extends StatelessWidget {
                               itemBuilder: (context, index) {
                                 final item = items[index];
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 4.0),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Expanded(
                                         child: Text(
@@ -157,17 +163,32 @@ class ReceiptScreen extends StatelessWidget {
                               },
                             ),
                             const Divider(thickness: 1, height: 20),
-                            _buildTotalRow('Total Belanja:', transaction.totalAmount),
+                            _buildTotalRow(
+                                'Total Belanja:', transaction.totalAmount),
                             _buildTotalRow('Uang Dibayar:', paidAmount),
-                            _buildTotalRow('Kembalian:', changeAmount, isChange: true),
+                            _buildTotalRow('Kembalian:', changeAmount,
+                                isChange: true),
                             const Divider(thickness: 2, height: 20),
-                            const Center(
-                              child: Text(
-                                'Terima kasih, Jangan lupa mampir lagi yah.!',
-                                style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
-                                textAlign: TextAlign.center,
+
+                            // --- Menampilkan catatan/ucapan nota dari storeInfo ---
+                            if (storeInfo?.notes?.isNotEmpty ?? false)
+                              Center(
+                                child: Text(
+                                  storeInfo!.notes!,
+                                  style: const TextStyle(
+                                      fontSize: 16, fontStyle: FontStyle.italic),
+                                  textAlign: TextAlign.center,
+                                ),
+                              )
+                            else
+                              const Center(
+                                child: Text(
+                                  'Terima kasih, Jangan lupa datang lagi yah.!', // Default jika tidak ada catatan
+                                  style: TextStyle(
+                                      fontSize: 16, fontStyle: FontStyle.italic),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
-                            ),
                             const SizedBox(height: 20),
 
                             // --- Bagian Logo Aplikasi Kamoo ---
@@ -179,8 +200,12 @@ class ReceiptScreen extends StatelessWidget {
                                     height: 50,
                                     width: 50,
                                     fit: BoxFit.contain,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.image_not_supported, size: 50, color: Colors.grey);
+                                    errorBuilder:
+                                        (context, error, stackTrace) {
+                                      return const Icon(
+                                          Icons.image_not_supported,
+                                          size: 50,
+                                          color: Colors.grey);
                                     },
                                   ),
                                   const SizedBox(height: 8),
@@ -205,15 +230,14 @@ class ReceiptScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        
-                    ),
-                    CustomPaint(
-                      size: Size(double.infinity, 20),
-                      painter: SerratedEdgePainter(isTop: false),
-                    ),
-                  ],
+                      ),
+                      CustomPaint(
+                        size: const Size(double.infinity, 20),
+                        painter: SerratedEdgePainter(isTop: false),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
               ),
               const SizedBox(height: 24),
               Center(
