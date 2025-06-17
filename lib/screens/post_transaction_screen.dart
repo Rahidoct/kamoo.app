@@ -137,7 +137,7 @@ class PostTransactionScreen extends StatelessWidget {
                         ),
                       Center(
                         child: Text(
-                          storeInfo?.name ?? 'Nama Toko Anda',
+                          storeInfo?.nama ?? 'Nama Toko Anda',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
